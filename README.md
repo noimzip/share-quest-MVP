@@ -1,29 +1,33 @@
-# Vite+ Monorepo Starter
+# SHARE Quest
 
-A starter for creating a Vite+ monorepo.
+> 学びの「楽しい！」をつなげる記事サービス
 
-## Development
+**本番URL**: https://share-quest.vercel.app/
 
-- Check everything is ready:
+## SHARE Quest とは
 
-```bash
-vp run ready
-```
+「学びの『楽しい！』をつなげる」をモットーに、ライターによって書かれる記事から、「学ぶこと」の楽しさや面白さを届けるコンテンツです。
 
-- Run the tests:
+「勉強」という固い縛りではなく、「気になったことを広げたい」「学ぶこと自体が楽しい」と思えるようなコンテンツを目指しています。
 
-```bash
-vp run -r test
-```
+## 主な活動
 
-- Build the monorepo:
+SHARE Questのライターが、「楽しい」「おもしろい」と感じたことを記事にすることで、その輪を広げています。一人でも多くの方に学びの楽しさを伝えられるよう活動しています。
 
-```bash
-vp run -r build
-```
+## 機能
 
-- Run the development server:
+- 記事の閲覧・検索・タグ絞り込み
+- ライター一覧・プロフィール
+- お気に入り機能
+- ライターによる記事作成・投稿申請
+- 編集長による記事承認・管理
 
-```bash
-vp run dev
-```
+## 技術スタック
+
+- フロントエンド: React 18 + Vite + TypeScript + Tailwind CSS
+- 認証・DB: Supabase
+- デプロイ: Vercel
+
+## お問い合わせ
+
+ご質問・ご意見は https://share-quest.vercel.app/contact からどうぞ。
