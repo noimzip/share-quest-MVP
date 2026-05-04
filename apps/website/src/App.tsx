@@ -106,6 +106,8 @@ const VIEW_TO_PATH: Record<string, string> = {
   terms: "/terms",
   contact: "/contact",
   writerDash: "/writer-dash",
+  writerNew: "/writer-dash/new",
+  writerEdit: "/writer-dash/edit",
   editorArticles: "/editor-dash/articles",
   editorRecommend: "/editor-dash/recommend",
   editorWriters: "/editor-dash/writers",
@@ -124,6 +126,9 @@ function parseLocation(pathname: string): { currentView: string; viewParam: stri
   if (pathname === "/terms") return { currentView: "terms", viewParam: null };
   if (pathname === "/contact") return { currentView: "contact", viewParam: null };
   if (pathname === "/writer-dash") return { currentView: "writerDash", viewParam: null };
+  if (pathname === "/writer-dash/new") return { currentView: "writerNew", viewParam: null };
+  const writerEditMatch = pathname.match(/^\/writer-dash\/edit\/(.+)$/);
+  if (writerEditMatch) return { currentView: "writerEdit", viewParam: writerEditMatch[1] };
   if (pathname === "/editor-dash") return { currentView: "editorDash", viewParam: null };
   if (pathname === "/editor-dash/articles")
     return { currentView: "editorArticles", viewParam: null };
@@ -258,7 +263,7 @@ export default function App() {
   // ページタイトル更新
   useEffect(() => {
     const titles: Record<string, string> = {
-      home: "SHARE Quest",
+      home: "SHARE Quest | 学びの『楽しい！』をつなげる",
       article: articles.find((a) => a.id === viewParam)?.title
         ? `${articles.find((a) => a.id === viewParam)!.title} | SHARE Quest`
         : "記事 | SHARE Quest",
@@ -269,6 +274,8 @@ export default function App() {
       settings: "設定 | SHARE Quest",
       about: "About Us | SHARE Quest",
       writerDash: "記事を作成 | SHARE Quest",
+      writerNew: "新規記事作成 | SHARE Quest",
+      writerEdit: "記事を編集 | SHARE Quest",
       editorDash: "編集長ダッシュボード | SHARE Quest",
       editorArticles: "全記事管理 | SHARE Quest",
       editorRecommend: "おすすめ設定 | SHARE Quest",
@@ -295,8 +302,11 @@ export default function App() {
   };
 
   const navigate = (view: string, param: string | null = null) => {
-    if (view === "profile" && param) nav(`/writers/${param}`);
-    else if (view === "article" && param) nav(`/articles/${param}`);
+    if (view === "profile" && param) {
+      const w = writers.find((wr) => wr.id === param);
+      nav(`/writers/${w?.username ?? param}`);
+    } else if (view === "article" && param) nav(`/articles/${param}`);
+    else if (view === "writerEdit" && param) nav(`/writer-dash/edit/${param}`);
     else nav(VIEW_TO_PATH[view] ?? "/");
     window.scrollTo(0, 0);
   };
@@ -1008,116 +1018,13 @@ export default function App() {
   // --- WriterDashboard ---
   const WriterDashboard = () => {
     const myArticles = articles.filter((a) => a.writerId === currentUserId);
-    const [showModal, setShowModal] = useState(false);
-    const [showPreview, setShowPreview] = useState(false);
-    const [editingArticle, setEditingArticle] = useState<Article | null>(null);
-    const [formTitle, setFormTitle] = useState("");
-    const [formContent, setFormContent] = useState("");
-    const [formTags, setFormTags] = useState("");
-    const [formColor, setFormColor] = useState("blue");
-    const [saving, setSaving] = useState(false);
 
     const openCreate = () => {
-      setEditingArticle(null);
-      setFormTitle("");
-      setFormContent("");
-      setFormTags("");
-      setFormColor("blue");
-      setShowModal(true);
+      navigate("writerNew");
     };
 
     const openEdit = (article: Article) => {
-      setEditingArticle(article);
-      setFormTitle(article.title);
-      setFormContent(article.content ?? "");
-      setFormTags((article.tags ?? []).join(", "));
-      setFormColor(article.thumbnailColor ?? "blue");
-      setShowModal(true);
-    };
-
-    const handleSave = async () => {
-      if (!formTitle.trim()) {
-        showToast("タイトルを入力してください");
-        return;
-      }
-      setSaving(true);
-      const tagsArray = formTags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-      if (editingArticle) {
-        const { error } = await supabase
-          .from("articles")
-          .update({
-            title: formTitle,
-            content: formContent,
-            tags: tagsArray,
-            thumbnail_color: formColor,
-          })
-          .eq("id", editingArticle.id);
-        if (!error) {
-          setArticles(
-            articles.map((a) =>
-              a.id === editingArticle.id
-                ? {
-                    ...a,
-                    title: formTitle,
-                    content: formContent,
-                    tags: tagsArray,
-                    thumbnailColor: formColor,
-                  }
-                : a,
-            ),
-          );
-          showToast("記事を更新しました");
-          setShowModal(false);
-          setShowPreview(false);
-        } else {
-          showToast("エラーが発生しました");
-        }
-      } else {
-        const { data, error } = await supabase
-          .from("articles")
-          .insert({
-            title: formTitle,
-            content: formContent,
-            tags: tagsArray,
-            thumbnail_color: formColor,
-            writer_id: currentUserId,
-            status: "draft",
-            views: 0,
-            likes: 0,
-            is_recommended: false,
-            is_popular: false,
-          })
-          .select()
-          .single();
-        if (!error && data) {
-          setArticles([
-            ...articles,
-            {
-              id: data.id,
-              title: data.title,
-              thumbnail: "",
-              thumbnailColor: formColor,
-              writerId: data.writer_id,
-              views: 0,
-              likes: 0,
-              tags: tagsArray,
-              isRecommended: false,
-              isPopular: false,
-              status: "draft",
-              content: formContent,
-            },
-          ]);
-          showToast("下書きを作成しました");
-          setShowModal(false);
-          setShowPreview(false);
-        } else {
-          showToast("エラーが発生しました");
-        }
-      }
-      setSaving(false);
+      navigate("writerEdit", article.id);
     };
 
     const handleSubmit = async (article: Article) => {
@@ -1244,129 +1151,239 @@ export default function App() {
         </section>
 
         {/* 記事作成・編集モーダル */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-            <div className="bg-white rounded-t-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold">
-                  {editingArticle ? "記事を編集" : "新規記事を作成"}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowPreview(!showPreview)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${showPreview ? "bg-blue-600 text-white border-blue-600" : "bg-white text-blue-600 border-blue-300 hover:bg-blue-50"}`}
-                  >
-                    {showPreview ? "編集に戻る" : "プレビュー"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowModal(false);
-                      setShowPreview(false);
-                    }}
-                    className="p-2 rounded-full hover:bg-gray-100"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+      </div>
+    );
+  };
+
+  // --- ArticleEditorPage ---
+  const ArticleEditorPage = ({ editingId }: { editingId: string | null }) => {
+    const editingArticle = editingId ? (articles.find((a) => a.id === editingId) ?? null) : null;
+    const [formTitle, setFormTitle] = useState(editingArticle?.title ?? "");
+    const [formContent, setFormContent] = useState(editingArticle?.content ?? "");
+    const [formColor, setFormColor] = useState(editingArticle?.thumbnailColor ?? "blue");
+    const [tags, setTags] = useState<string[]>(editingArticle?.tags ?? []);
+    const [tagInput, setTagInput] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+
+    const addTag = (val: string) => {
+      const newTags = val
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t && !tags.includes(t));
+      if (newTags.length) setTags([...tags, ...newTags]);
+      setTagInput("");
+    };
+    const removeTag = (tag: string) => setTags(tags.filter((t) => t !== tag));
+
+    const handleSave = async () => {
+      if (!formTitle.trim()) {
+        showToast("タイトルを入力してください");
+        return;
+      }
+      setSaving(true);
+      if (editingArticle) {
+        const { error } = await supabase
+          .from("articles")
+          .update({ title: formTitle, content: formContent, tags, thumbnail_color: formColor })
+          .eq("id", editingArticle.id);
+        if (!error) {
+          setArticles(
+            articles.map((a) =>
+              a.id === editingArticle.id
+                ? { ...a, title: formTitle, content: formContent, tags, thumbnailColor: formColor }
+                : a,
+            ),
+          );
+          showToast("記事を更新しました");
+          navigate("writerDash");
+        } else {
+          showToast("エラーが発生しました");
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("articles")
+          .insert({
+            title: formTitle,
+            content: formContent,
+            tags,
+            thumbnail_color: formColor,
+            writer_id: currentUserId,
+            status: "draft",
+            views: 0,
+            likes: 0,
+            is_recommended: false,
+            is_popular: false,
+          })
+          .select()
+          .single();
+        if (!error && data) {
+          setArticles([
+            ...articles,
+            {
+              id: data.id,
+              title: data.title,
+              thumbnail: "",
+              thumbnailColor: formColor,
+              writerId: data.writer_id,
+              views: 0,
+              likes: 0,
+              tags,
+              isRecommended: false,
+              isPopular: false,
+              status: "draft",
+              content: formContent,
+            },
+          ]);
+          showToast("下書きを保存しました");
+          navigate("writerDash");
+        } else {
+          showToast("エラーが発生しました");
+        }
+      }
+      setSaving(false);
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("writerDash")}
+              className="p-2 rounded-full hover:bg-gray-100"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-800">
+              {editingArticle ? "記事を編集" : "新規記事作成"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${showPreview ? "bg-blue-600 text-white border-blue-600" : "bg-white text-blue-600 border-blue-300 hover:bg-blue-50"}`}
+            >
+              {showPreview ? "編集" : "プレビュー"}
+            </button>
+            <button
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="px-4 py-1.5 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "保存中..." : editingArticle ? "更新" : "下書き保存"}
+            </button>
+          </div>
+        </div>
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+          {showPreview ? (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div
+                className={`w-full h-40 rounded-xl mb-4 flex items-center justify-center ${getThumbnailColor(formColor).bg}`}
+              >
+                <LogoIcon className="w-16 h-16 opacity-20" />
               </div>
-              {showPreview && (
-                <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 min-h-[200px]">
-                  <div
-                    className={`w-full h-24 rounded-xl mb-3 flex items-center justify-center ${getThumbnailColor(formColor).bg}`}
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                {formTitle || <span className="text-gray-400">（タイトル未入力）</span>}
+              </h2>
+              <div className="flex flex-wrap gap-1 mb-4">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"
                   >
-                    <LogoIcon className="w-10 h-10 opacity-30" />
-                  </div>
-                  <h4 className="font-bold text-gray-800 text-base mb-2 break-words">
-                    {formTitle || <span className="text-gray-400">（タイトル未入力）</span>}
-                  </h4>
-                  {formTags && (
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {formTags
-                        .split(",")
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                        .map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                    </div>
-                  )}
-                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-                    {formContent || <span className="text-gray-400">（本文未入力）</span>}
-                  </div>
-                </div>
-              )}
-              {/* タイトル */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  タイトル <span className="text-red-500">*</span>
-                </label>
-                <input
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  placeholder="記事のタイトルを入力"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                />
+                    {tag}
+                  </span>
+                ))}
               </div>
-              {/* サムネイルカラー */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  サムネイルカラー
-                </label>
-                <div className="flex gap-2 flex-wrap">
-                  {THUMBNAIL_COLORS.map((color) => (
-                    <button
-                      key={color.id}
-                      onClick={() => setFormColor(color.id)}
-                      className={`w-10 h-10 rounded-full ${color.bg} border-4 transition-all ${
-                        formColor === color.id ? "border-gray-700 scale-110" : "border-transparent"
-                      }`}
-                      title={color.label}
+              <div className="text-sm text-gray-700 leading-loose whitespace-pre-wrap">
+                {formContent || <span className="text-gray-400">（本文未入力）</span>}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    タイトル <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="記事のタイトルを入力"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    サムネイルカラー
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {THUMBNAIL_COLORS.map((color) => (
+                      <button
+                        key={color.id}
+                        onClick={() => setFormColor(color.id)}
+                        className={`w-10 h-10 rounded-full ${color.bg} border-4 transition-all ${formColor === color.id ? "border-gray-700 scale-110" : "border-transparent"}`}
+                        title={color.label}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    選択中: {getThumbnailColor(formColor).label}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">タグ</label>
+                  <div className="flex flex-wrap gap-1 mb-2 min-h-[28px]">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => removeTag(tag)}
+                          className="hover:text-red-500 font-bold leading-none"
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="タグを入力（Enterまたはカンマで追加）"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          addTag(tagInput);
+                        }
+                      }}
                     />
-                  ))}
+                    <button
+                      onClick={() => addTag(tagInput)}
+                      className="px-3 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700"
+                    >
+                      追加
+                    </button>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  選択中: {getThumbnailColor(formColor).label}
-                </p>
               </div>
-              {/* タグ */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  タグ（カンマ区切り）
-                </label>
-                <input
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  placeholder="例: 理科, 歴史, プログラミング"
-                  value={formTags}
-                  onChange={(e) => setFormTags(e.target.value)}
-                />
-              </div>
-              {/* 本文 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">本文</label>
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <label className="block text-sm font-bold text-gray-700 mb-2">本文</label>
                 <textarea
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-                  rows={8}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none leading-loose"
+                  rows={24}
                   placeholder="記事の本文を入力してください"
                   value={formContent}
                   onChange={(e) => setFormContent(e.target.value)}
                 />
               </div>
-              {/* 保存ボタン */}
-              <button
-                onClick={() => void handleSave()}
-                disabled={saving}
-                className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {saving ? "保存中..." : editingArticle ? "更新する" : "下書き保存"}
-              </button>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     );
   };
@@ -1693,6 +1710,8 @@ export default function App() {
   const hideHeader = [
     "article",
     "writerDash",
+    "writerNew",
+    "writerEdit",
     "editorDash",
     "editorArticles",
     "editorRecommend",
@@ -1714,6 +1733,12 @@ export default function App() {
         {currentView === "favorites" && <FavoritesView />}
         {currentView === "settings" && <SettingsView />}
         {currentView === "about" && <AboutView />}
+        {currentView === "writerNew" && (userRole === "writer" || userRole === "editor") && (
+          <ArticleEditorPage editingId={null} />
+        )}
+        {currentView === "writerEdit" && (userRole === "writer" || userRole === "editor") && (
+          <ArticleEditorPage editingId={viewParam} />
+        )}
         {currentView === "writerDash" && (userRole === "writer" || userRole === "editor") && (
           <WriterDashboard />
         )}
