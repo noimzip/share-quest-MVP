@@ -1173,7 +1173,7 @@ export default function App() {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-xl font-bold text-gray-800">ライター管理</h2>
+          <h2 className="text-xl font-bold text-gray-800">記事を作成</h2>
         </div>
 
         {/* 記事一覧 */}
@@ -1526,12 +1526,21 @@ export default function App() {
           <h3 className="font-bold text-gray-800 border-b-2 border-blue-200 pb-2 mb-3 inline-block">
             ライター
           </h3>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>・編集長：あゆむ　-Ayumu-</li>
-            <li>・天馬 楽　-TENBA Gaku-</li>
-            <li>・るーと　-Root-</li>
-            <li>・○○○○</li>
-          </ul>
+          <div className="mb-3">
+            <span className="inline-block text-xs font-bold text-white bg-blue-500 px-2 py-0.5 rounded-full mb-2">
+              編集長
+            </span>
+            <p className="text-sm text-gray-700 font-bold pl-1">三上 瑠衣　-MIKAMI Rui-</p>
+          </div>
+          <div>
+            <span className="inline-block text-xs font-bold text-white bg-gray-400 px-2 py-0.5 rounded-full mb-2">
+              ライター
+            </span>
+            <ul className="text-sm text-gray-600 space-y-1 pl-1">
+              <li>天羽 楽　-TENBA Gaku-</li>
+              <li>るーと　-Root-</li>
+            </ul>
+          </div>
           <button
             onClick={() => navigate("writers")}
             className="mt-3 text-sm text-blue-500 font-bold underline hover:text-blue-700"
