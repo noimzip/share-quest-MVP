@@ -330,7 +330,7 @@ export default function App() {
           <LogoIcon className="w-10 h-10" />
           <img
             src={imgTitle}
-            className="h-8 object-contain hidden sm:inline-block"
+            className="h-10 object-contain hidden sm:inline-block"
             alt="SHARE Quest"
           />
         </div>
