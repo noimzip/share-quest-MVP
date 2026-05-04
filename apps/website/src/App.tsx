@@ -328,25 +328,42 @@ export default function App() {
       return;
     }
     if (favorites.includes(articleId)) {
-      void supabase.from("favorites").delete().eq("article_id", articleId);
+      supabase
+        .from("favorites")
+        .delete()
+        .eq("article_id", articleId)
+        .then(({ error }) => {
+          if (error) console.error("fav delete:", error);
+        });
       setFavorites(favorites.filter((id) => id !== articleId));
-      const curLikes = articles.find((a) => a.id === articleId)?.likes ?? 1;
-      void supabase
+      const curLikes1 = articles.find((a) => a.id === articleId)?.likes ?? 1;
+      supabase
         .from("articles")
-        .update({ likes: Math.max(0, curLikes - 1) })
-        .eq("id", articleId);
+        .update({ likes: Math.max(0, curLikes1 - 1) })
+        .eq("id", articleId)
+        .then(({ error }) => {
+          if (error) console.error("likes dec:", error);
+        });
       setArticles((prev) =>
         prev.map((a) => (a.id === articleId ? { ...a, likes: Math.max(0, a.likes - 1) } : a)),
       );
       showToast("お気に入りから削除しました");
     } else {
-      void supabase.from("favorites").insert({ article_id: articleId, user_id: currentUserId });
+      supabase
+        .from("favorites")
+        .insert({ article_id: articleId, user_id: currentUserId })
+        .then(({ error }) => {
+          if (error) console.error("fav insert:", error);
+        });
       setFavorites([...favorites, articleId]);
-      const curLikes = articles.find((a) => a.id === articleId)?.likes ?? 0;
-      void supabase
+      const curLikes2 = articles.find((a) => a.id === articleId)?.likes ?? 0;
+      supabase
         .from("articles")
-        .update({ likes: curLikes + 1 })
-        .eq("id", articleId);
+        .update({ likes: curLikes2 + 1 })
+        .eq("id", articleId)
+        .then(({ error }) => {
+          if (error) console.error("likes inc:", error);
+        });
       setArticles((prev) =>
         prev.map((a) => (a.id === articleId ? { ...a, likes: a.likes + 1 } : a)),
       );
