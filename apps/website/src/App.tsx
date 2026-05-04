@@ -254,10 +254,11 @@ export default function App() {
 
   // views カウントアップ
   useEffect(() => {
+    console.log("views effect:", currentView, viewParam, articles.length);
     if (currentView !== "article" || !viewParam) return;
     const article = articles.find((a) => a.id === viewParam);
+    console.log("views article:", article?.id, article?.views);
     if (!article) return;
-    console.log("views update:", article.id, article.views + 1);
     supabase
       .from("articles")
       .update({ views: article.views + 1 })
@@ -265,6 +266,9 @@ export default function App() {
       .then(({ error, data }) => {
         console.log("views result:", data, error);
       });
+    setArticles((prev) =>
+      prev.map((a) => (a.id === article.id ? { ...a, views: a.views + 1 } : a)),
+    );
   }, [currentView, viewParam]);
 
   // ページタイトル更新
