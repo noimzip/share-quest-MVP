@@ -4,6 +4,13 @@ import { supabase } from "./supabase";
 import type { Profile } from "./supabase";
 import { ChevronLeft, Share2, Eye, X, Plus, Edit3, Check, AlertCircle } from "lucide-react";
 
+type Series = {
+  id: string;
+  title: string;
+  description?: string | null;
+  writerId: string;
+};
+
 type Article = {
   id: string;
   title: string;
@@ -19,6 +26,8 @@ type Article = {
   status: "draft" | "pending" | "published";
   content?: string;
   summary?: string;
+  seriesId?: string | null;
+  episodeNumber?: number | null;
 };
 import imgLogo from "./assets/170805.jpg";
 import imgTitle from "./assets/117_20260501195729.png";
@@ -110,6 +119,7 @@ const VIEW_TO_PATH: Record<string, string> = {
   writerDash: "/writer-dash",
   writerNew: "/writer-dash/new",
   writerEdit: "/writer-dash/edit",
+  writerSeries: "/writer-dash/series",
   editorArticles: "/editor-dash/articles",
   editorRecommend: "/editor-dash/recommend",
   editorWriters: "/editor-dash/writers",
@@ -129,6 +139,7 @@ function parseLocation(pathname: string): { currentView: string; viewParam: stri
   if (pathname === "/contact") return { currentView: "contact", viewParam: null };
   if (pathname === "/writer-dash") return { currentView: "writerDash", viewParam: null };
   if (pathname === "/writer-dash/new") return { currentView: "writerNew", viewParam: null };
+  if (pathname === "/writer-dash/series") return { currentView: "writerSeries", viewParam: null };
   const writerEditMatch = pathname.match(/^\/writer-dash\/edit\/(.+)$/);
   if (writerEditMatch) return { currentView: "writerEdit", viewParam: writerEditMatch[1] };
   if (pathname === "/editor-dash") return { currentView: "editorDash", viewParam: null };
@@ -202,6 +213,24 @@ export default function App() {
   const currentUserId = profile?.id ?? "";
   const [writers, setWriters] = useState<Profile[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [seriesList, setSeriesList] = useState<Series[]>([]);
+  useEffect(() => {
+    void supabase
+      .from("series")
+      .select("*")
+      .then(({ data }) => {
+        if (data) {
+          setSeriesList(
+            data.map((s) => ({
+              id: s.id,
+              title: s.title,
+              description: s.description ?? null,
+              writerId: s.writer_id,
+            })),
+          );
+        }
+      });
+  }, []);
 
   useEffect(() => {
     void supabase
@@ -234,6 +263,8 @@ export default function App() {
               isPopular: a.is_popular,
               status: a.status,
               content: a.content,
+              seriesId: a.series_id ?? null,
+              episodeNumber: a.episode_number ?? null,
             })),
           );
         }
@@ -285,6 +316,7 @@ export default function App() {
       settings: "設定 | SHARE Quest",
       about: "About Us | SHARE Quest",
       writerDash: "記事を作成 | SHARE Quest",
+      writerSeries: "連載管理 | SHARE Quest",
       writerNew: "新規記事作成 | SHARE Quest",
       writerEdit: "記事を編集 | SHARE Quest",
       editorDash: "編集長ダッシュボード | SHARE Quest",
@@ -602,6 +634,22 @@ export default function App() {
           </div>
         )}
         <div className="p-4 space-y-5">
+          {article.seriesId &&
+            (() => {
+              const series = seriesList.find((s) => s.id === article.seriesId);
+              if (!series) return null;
+              return (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                    連載
+                  </span>
+                  <span className="text-sm font-bold text-blue-600">{series.title}</span>
+                  {article.episodeNumber != null && (
+                    <span className="text-xs text-gray-400">第{article.episodeNumber}話</span>
+                  )}
+                </div>
+              );
+            })()}
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">{article.title}</h1>
           {article.summary && (
             <div className="bg-blue-50 p-4 rounded-xl text-gray-700 border border-blue-100 font-medium">
@@ -1121,11 +1169,141 @@ export default function App() {
   );
 
   // --- WriterDashboard ---
+  const WriterSeriesPage = () => {
+    const [newTitle, setNewTitle] = useState("");
+    const [newDesc, setNewDesc] = useState("");
+    const [saving, setSaving] = useState(false);
+    const mySeries = seriesList.filter((s) => s.writerId === currentUserId);
+
+    const handleCreate = async () => {
+      if (!newTitle.trim()) {
+        showToast("連載名を入力してください");
+        return;
+      }
+      setSaving(true);
+      const { data, error } = await supabase
+        .from("series")
+        .insert({
+          title: newTitle.trim(),
+          description: newDesc.trim() || null,
+          writer_id: currentUserId,
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        setSeriesList([
+          ...seriesList,
+          {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            writerId: data.writer_id,
+          },
+        ]);
+        setNewTitle("");
+        setNewDesc("");
+        showToast("連載を作成しました");
+      } else {
+        showToast("エラーが発生しました");
+      }
+      setSaving(false);
+    };
+
+    const handleDelete = async (id: string, title: string) => {
+      if (
+        !window.confirm(`「${title}」を削除しますか？\n連載に紐づく記事の連載設定は解除されます。`)
+      )
+        return;
+      const { error } = await supabase.from("series").delete().eq("id", id);
+      if (!error) {
+        setSeriesList(seriesList.filter((s) => s.id !== id));
+        setArticles(
+          articles.map((a) =>
+            a.seriesId === id ? { ...a, seriesId: null, episodeNumber: null } : a,
+          ),
+        );
+        showToast("連載を削除しました");
+      }
+    };
+
+    return (
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate("writerDash")}
+            className="p-2 rounded-xl hover:bg-gray-100"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">連載管理</h1>
+        </div>
+
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+          <h2 className="font-bold text-gray-800">新しい連載を作成</h2>
+          <input
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="連載名 *"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+          />
+          <textarea
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+            placeholder="連載の説明（任意）"
+            rows={3}
+            value={newDesc}
+            onChange={(e) => setNewDesc(e.target.value)}
+          />
+          <button
+            onClick={handleCreate}
+            disabled={saving}
+            className="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600 disabled:opacity-50"
+          >
+            {saving ? "作成中..." : "連載を作成"}
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="font-bold text-gray-800">作成済みの連載</h2>
+          {mySeries.length === 0 ? (
+            <p className="text-gray-400 text-sm text-center py-8">連載はまだありません</p>
+          ) : (
+            mySeries.map((s) => {
+              const count = articles.filter((a) => a.seriesId === s.id).length;
+              return (
+                <div
+                  key={s.id}
+                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-start justify-between gap-3"
+                >
+                  <div>
+                    <p className="font-bold text-gray-900">{s.title}</p>
+                    {s.description && (
+                      <p className="text-sm text-gray-500 mt-0.5">{s.description}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">{count}件の記事</p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(s.id, s.title)}
+                    className="text-red-400 hover:text-red-600 text-sm font-bold shrink-0"
+                  >
+                    削除
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const WriterDashboard = () => {
     const myArticles = articles.filter((a) => a.writerId === currentUserId);
 
     const openCreate = () => {
       navigate("writerNew");
+    };
+    const openSeriesManager = () => {
+      navigate("writerSeries");
     };
 
     const openEdit = (article: Article) => {
@@ -1192,12 +1370,20 @@ export default function App() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-gray-800">自分の記事 ({myArticles.length}件)</h3>
-            <button
-              onClick={openCreate}
-              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-1 hover:bg-blue-700"
-            >
-              <Plus className="w-4 h-4" /> 新規作成
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={openSeriesManager}
+                className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-1 hover:bg-gray-200"
+              >
+                連載管理
+              </button>
+              <button
+                onClick={openCreate}
+                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-1 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4" /> 新規作成
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {myArticles.length === 0 && (
@@ -1267,6 +1453,10 @@ export default function App() {
     const [formContent, setFormContent] = useState(editingArticle?.content ?? "");
     const [formColor, setFormColor] = useState(editingArticle?.thumbnailColor ?? "blue");
     const [tags, setTags] = useState<string[]>(editingArticle?.tags ?? []);
+    const [formSeriesId, setFormSeriesId] = useState(editingArticle?.seriesId ?? "");
+    const [formEpisodeNumber, setFormEpisodeNumber] = useState(
+      editingArticle?.episodeNumber != null ? String(editingArticle.episodeNumber) : "",
+    );
     const [tagInput, setTagInput] = useState("");
     const [saving, setSaving] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -1323,6 +1513,8 @@ export default function App() {
             tags,
             thumbnail_color: formColor,
             thumbnail_url: thumbnailUrl,
+            series_id: formSeriesId || null,
+            episode_number: formEpisodeNumber ? parseInt(formEpisodeNumber) : null,
           })
           .eq("id", editingArticle.id);
         if (!error) {
@@ -1336,6 +1528,8 @@ export default function App() {
                     tags,
                     thumbnailColor: formColor,
                     thumbnailUrl: thumbnailUrl,
+                    seriesId: formSeriesId || null,
+                    episodeNumber: formEpisodeNumber ? parseInt(formEpisodeNumber) : null,
                   }
                 : a,
             ),
@@ -1360,6 +1554,8 @@ export default function App() {
             likes: 0,
             is_recommended: false,
             is_popular: false,
+            series_id: formSeriesId || null,
+            episode_number: formEpisodeNumber ? parseInt(formEpisodeNumber) : null,
           })
           .select()
           .single();
@@ -1380,6 +1576,8 @@ export default function App() {
               isPopular: false,
               status: "draft",
               content: formContent,
+              seriesId: formSeriesId || null,
+              episodeNumber: formEpisodeNumber ? parseInt(formEpisodeNumber) : null,
             },
           ]);
           showToast("下書きを保存しました");
@@ -1449,6 +1647,36 @@ export default function App() {
           ) : (
             <>
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">連載</label>
+                  <select
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={formSeriesId}
+                    onChange={(e) => setFormSeriesId(e.target.value)}
+                  >
+                    <option value="">連載なし（単発記事）</option>
+                    {seriesList
+                      .filter((s) => s.writerId === currentUserId)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.title}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                {formSeriesId && (
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">話数</label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="例: 1"
+                      value={formEpisodeNumber}
+                      onChange={(e) => setFormEpisodeNumber(e.target.value)}
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1">
                     タイトル <span className="text-red-500">*</span>
@@ -1931,6 +2159,9 @@ export default function App() {
         )}
         {currentView === "writerDash" && (userRole === "writer" || userRole === "editor") && (
           <WriterDashboard />
+        )}
+        {currentView === "writerSeries" && (userRole === "writer" || userRole === "editor") && (
+          <WriterSeriesPage />
         )}
         {currentView === "editorDash" && <EditorDashboard />}
         {currentView === "editorArticles" && <EditorArticlesView />}
