@@ -230,17 +230,16 @@ export default function App() {
           );
         }
       });
-  }, []);
+  }, [currentView]);
 
   useEffect(() => {
     void supabase
       .from("profiles")
       .select("*")
-      .in("role", ["writer", "editor"])
       .then(({ data }) => {
         if (data) setWriters(data as Profile[]);
       });
-  }, []);
+  }, [currentView]);
 
   useEffect(() => {
     void supabase
@@ -269,7 +268,7 @@ export default function App() {
           );
         }
       });
-  }, []);
+  }, [currentView]);
   const [fontSize, setFontSize] = useState("medium");
   const [favorites, setFavorites] = useState<string[]>([]);
 
@@ -2466,7 +2465,11 @@ function EditorWritersView() {
 
   const changeRole = async (id: string, role: "viewer" | "writer" | "editor") => {
     const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
-    if (!error) setAllProfiles(allProfiles.map((w) => (w.id === id ? { ...w, role } : w)));
+    if (error) {
+      alert("更新に失敗しました: " + error.message);
+    } else {
+      setAllProfiles(allProfiles.map((w) => (w.id === id ? { ...w, role } : w)));
+    }
   };
 
   const promoteWriter = async (email: string) => {
