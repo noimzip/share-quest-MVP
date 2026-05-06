@@ -282,11 +282,14 @@ export default function App() {
       });
   }, [userRole]);
 
-  // views カウントアップ
+  // views カウントアップ（セッション内で同じ記事は1回だけ）
+  const viewedArticleIds = useMemo(() => new Set<string>(), []);
   useEffect(() => {
     if (currentView !== "article" || !viewParam) return;
+    if (viewedArticleIds.has(viewParam)) return;
     const article = articles.find((a) => a.id === viewParam);
     if (!article) return;
+    viewedArticleIds.add(viewParam);
     supabase
       .from("articles")
       .update({ views: article.views + 1 })
@@ -829,22 +832,24 @@ export default function App() {
         <section className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
           <h3 className="text-sm font-bold text-gray-500 mb-3 border-b pb-2">ライターでしぼる</h3>
           <div className="grid grid-cols-2 gap-2">
-            {writers.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => toggleWriter(w.id)}
-                className={`flex items-center gap-2 p-2 border rounded-lg text-left transition-colors ${selectedWriterIds.includes(w.id) ? "bg-blue-50 border-blue-400" : "bg-gray-50 border-gray-200 hover:bg-blue-50 hover:border-blue-200"}`}
-              >
-                {w.avatar_url ? (
-                  <img src={w.avatar_url} className="w-6 h-6 rounded-full object-cover" alt="" />
-                ) : (
-                  <CustomUserIcon className="w-6 h-6" />
-                )}
-                <span className="text-sm font-bold text-gray-700 truncate">
-                  {w.display_name ?? w.email}
-                </span>
-              </button>
-            ))}
+            {writers
+              .filter((w) => w.role === "writer" || w.role === "editor")
+              .map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => toggleWriter(w.id)}
+                  className={`flex items-center gap-2 p-2 border rounded-lg text-left transition-colors ${selectedWriterIds.includes(w.id) ? "bg-blue-50 border-blue-400" : "bg-gray-50 border-gray-200 hover:bg-blue-50 hover:border-blue-200"}`}
+                >
+                  {w.avatar_url ? (
+                    <img src={w.avatar_url} className="w-6 h-6 rounded-full object-cover" alt="" />
+                  ) : (
+                    <CustomUserIcon className="w-6 h-6" />
+                  )}
+                  <span className="text-sm font-bold text-gray-700 truncate">
+                    {w.display_name ?? w.email}
+                  </span>
+                </button>
+              ))}
           </div>
         </section>
         {hasFilter && (
