@@ -172,20 +172,8 @@ export default function App() {
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              setProfile(data);
-              setUserRole(data.role);
-            }
-          });
-      }
-      setAuthLoading(false);
+      // プロフィール取得は onAuthStateChange に一本化
+      if (!session?.user) setAuthLoading(false);
     });
     const {
       data: { subscription },
@@ -201,10 +189,12 @@ export default function App() {
               setProfile(data);
               setUserRole(data.role);
             }
+            setAuthLoading(false);
           });
       } else {
         setProfile(null);
         setUserRole("guest");
+        setAuthLoading(false);
       }
     });
     return () => subscription.unsubscribe();
@@ -230,7 +220,7 @@ export default function App() {
           );
         }
       });
-  }, [currentView]);
+  }, []);
 
   useEffect(() => {
     void supabase
@@ -239,7 +229,7 @@ export default function App() {
       .then(({ data }) => {
         if (data) setWriters(data as Profile[]);
       });
-  }, [currentView]);
+  }, []);
 
   useEffect(() => {
     void supabase
@@ -268,7 +258,7 @@ export default function App() {
           );
         }
       });
-  }, [currentView]);
+  }, []);
   const [fontSize, setFontSize] = useState("medium");
   const [favorites, setFavorites] = useState<string[]>([]);
 
@@ -277,6 +267,7 @@ export default function App() {
     void supabase
       .from("favorites")
       .select("article_id")
+      .eq("user_id", currentUserId)
       .then(({ data }) => {
         if (data) setFavorites(data.map((f) => f.article_id));
       });
@@ -300,7 +291,7 @@ export default function App() {
     setArticles((prev) =>
       prev.map((a) => (a.id === article.id ? { ...a, views: a.views + 1 } : a)),
     );
-  }, [currentView, viewParam]);
+  }, [currentView, viewParam, articles]);
 
   // ページタイトル更新
   useEffect(() => {
