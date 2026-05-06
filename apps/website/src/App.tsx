@@ -2464,13 +2464,7 @@ function EditorWritersView() {
   const [loading, setLoading] = useState(true);
   const [searchEmail, setSearchEmail] = useState("");
   const [searchRole, setSearchRole] = useState<"" | "viewer" | "writer" | "editor">("");
-  const [toast, setToast] = useState("");
   const nav = useNavigate();
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
 
   const fetchAll = () => {
     setLoading(true);
@@ -2491,7 +2485,7 @@ function EditorWritersView() {
   const changeRole = async (id: string, role: "viewer" | "writer" | "editor") => {
     const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
     if (error) {
-      showToast("更新に失敗しました: " + error.message);
+      alert("更新に失敗しました: " + error.message);
     } else {
       setAllProfiles(allProfiles.map((w) => (w.id === id ? { ...w, role } : w)));
     }
@@ -2505,12 +2499,12 @@ function EditorWritersView() {
       .eq("email", email.trim())
       .single();
     if (fetchError || !data) {
-      showToast("ユーザーが見つかりません。先にアカウント登録が必要です。");
+      alert("ユーザーが見つかりません。先にアカウント登録が必要です。");
       return;
     }
     const { error } = await supabase.from("profiles").update({ role: "writer" }).eq("id", data.id);
     if (error) {
-      showToast("エラーが発生しました。もう一度お試しください。");
+      alert("エラーが発生しました");
       return;
     }
     const updated = { ...data, role: "writer" as const };
@@ -2519,7 +2513,7 @@ function EditorWritersView() {
         ? prev.map((w) => (w.id === data.id ? updated : w))
         : [...prev, updated],
     );
-    showToast(`${data.display_name ?? data.email} をライターに昇格しました`);
+    alert(`${data.display_name ?? data.email} をライターに昇格しました`);
   };
 
   const [newEmail, setNewEmail] = useState("");
