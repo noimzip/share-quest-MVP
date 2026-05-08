@@ -716,7 +716,7 @@ export default function App() {
               <button
                 onClick={() =>
                   window.open(
-                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${article.title} | ${writer?.display_name ?? "SHARE Quest"} From SHARE Quest`)}&url=${encodeURIComponent(articleUrl)}`,
+                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${article.title} | ${writer?.display_name ?? "SHARE Quest"} From SHARE Quest`)}&url=${encodeURIComponent(articleUrl)}&via=SHARE_Quest_Off`,
                     "_blank",
                   )
                 }
