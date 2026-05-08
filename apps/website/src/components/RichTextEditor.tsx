@@ -159,7 +159,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: Props
       type="button"
       onClick={onClick}
       title={title}
-      className={`px-2 py-1.5 rounded text-sm transition-colors ${active ? "bg-blue-100 text-blue-700 font-bold" : "text-gray-600 hover:bg-gray-100"}`}
+      className={`flex items-center justify-center min-w-[44px] min-h-[44px] px-2 py-1.5 rounded text-sm transition-colors ${active ? "bg-blue-100 text-blue-700 font-bold" : "text-gray-600 hover:bg-gray-100"}`}
     >
       {children}
     </button>
@@ -168,7 +168,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: Props
 
   return (
     <div className="border border-gray-300 rounded-xl overflow-visible bg-white shadow-sm">
-      <div className="border-b border-gray-200 bg-gray-50 p-2 flex flex-wrap items-center gap-0.5 rounded-t-xl sticky top-[80px] z-10">
+      <div className="border-b border-gray-200 bg-gray-50 p-2 flex overflow-x-auto flex-nowrap items-center gap-0.5 rounded-t-xl sm:sticky sm:top-[80px] z-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <select
           className="text-sm border border-gray-200 rounded px-2 py-1 bg-white text-gray-700 mr-1"
           value={
