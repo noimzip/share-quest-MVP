@@ -1845,7 +1845,7 @@ export default function App() {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">タグ</label>
-                  <div className="flex flex-wrap gap-1 mb-2 min-h-[28px]">
+                  <div className="flex flex-wrap gap-1 mb-2 min-h-[28px] max-w-xs">
                     {tags.map((tag) => (
                       <span
                         key={tag}
