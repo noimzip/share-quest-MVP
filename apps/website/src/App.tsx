@@ -161,6 +161,47 @@ function parseLocation(pathname: string): { currentView: string; viewParam: stri
   return { currentView: "notFound", viewParam: null };
 }
 
+// --- ArticleEditorTabs (スマホ用タブ切り替え) ---
+const ArticleEditorTabs = ({
+  settingsPanel,
+  editorPanel,
+}: {
+  settingsPanel: React.ReactNode;
+  editorPanel: React.ReactNode;
+}) => {
+  const [activeTab, setActiveTab] = useState<"settings" | "editor">("editor");
+  return (
+    <div>
+      {/* スマホのみタブ表示 */}
+      <div className="flex md:hidden border-b border-gray-200 mb-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab("editor")}
+          className={`flex-1 py-2.5 text-sm font-bold transition-colors ${activeTab === "editor" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}
+        >
+          ✏️ 本文
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("settings")}
+          className={`flex-1 py-2.5 text-sm font-bold transition-colors ${activeTab === "settings" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}
+        >
+          ⚙️ 設定
+        </button>
+      </div>
+      {/* スマホ：タブで切り替え / PC：2カラム並列 */}
+      <div className="md:grid md:grid-cols-[360px_1fr] md:gap-6 md:items-start">
+        <div className={activeTab === "settings" ? "block md:block" : "hidden md:block"}>
+          {settingsPanel}
+        </div>
+        <div className={activeTab === "editor" ? "block md:block" : "hidden md:block"}>
+          {editorPanel}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const location = useLocation();
   const nav = useNavigate();
@@ -1508,46 +1549,6 @@ export default function App() {
     );
   };
 
-  // --- ArticleEditorTabs (スマホ用タブ切り替え) ---
-  const ArticleEditorTabs = ({
-    settingsPanel,
-    editorPanel,
-  }: {
-    settingsPanel: React.ReactNode;
-    editorPanel: React.ReactNode;
-  }) => {
-    const [activeTab, setActiveTab] = useState<"settings" | "editor">("editor");
-    return (
-      <div>
-        {/* スマホのみタブ表示 */}
-        <div className="flex md:hidden border-b border-gray-200 mb-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab("editor")}
-            className={`flex-1 py-2.5 text-sm font-bold transition-colors ${activeTab === "editor" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}
-          >
-            ✏️ 本文
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("settings")}
-            className={`flex-1 py-2.5 text-sm font-bold transition-colors ${activeTab === "settings" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}
-          >
-            ⚙️ 設定
-          </button>
-        </div>
-        {/* スマホ：タブで切り替え / PC：2カラム並列 */}
-        <div className="md:grid md:grid-cols-[360px_1fr] md:gap-6 md:items-start">
-          <div className={activeTab === "settings" ? "block md:block" : "hidden md:block"}>
-            {settingsPanel}
-          </div>
-          <div className={activeTab === "editor" ? "block md:block" : "hidden md:block"}>
-            {editorPanel}
-          </div>
-        </div>
-      </div>
-    );
-  };
   // --- ArticleEditorPage ---
   const ArticleEditorPage = ({ editingId }: { editingId: string | null }) => {
     const editingArticle = editingId ? (articles.find((a) => a.id === editingId) ?? null) : null;
