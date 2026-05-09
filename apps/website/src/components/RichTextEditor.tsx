@@ -108,7 +108,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: Props
     content,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
-      attributes: { class: "prose prose-sm max-w-none min-h-[400px] p-4 focus:outline-none" },
+      attributes: { class: "prose prose-sm max-w-none min-h-[500px] p-4 focus:outline-none" },
     },
   });
 

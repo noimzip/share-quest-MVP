@@ -187,11 +187,15 @@ const ArticleEditorTabs = ({
           ⚙️ 設定
         </button>
       </div>
-      <div className="md:grid md:grid-cols-[360px_1fr] md:gap-6 md:items-start">
-        <div className={activeTab === "settings" ? "block md:block" : "hidden md:block"}>
+      <div className="md:grid md:grid-cols-[360px_1fr] md:gap-6 md:items-stretch md:h-[calc(100vh-130px)]">
+        <div
+          className={`md:overflow-y-auto md:h-full ${activeTab === "settings" ? "block md:block" : "hidden md:block"}`}
+        >
           {settingsPanel}
         </div>
-        <div className={`min-w-0 ${activeTab === "editor" ? "block md:block" : "hidden md:block"}`}>
+        <div
+          className={`min-w-0 md:overflow-y-auto md:h-full ${activeTab === "editor" ? "block md:block" : "hidden md:block"}`}
+        >
           {editorPanel}
         </div>
       </div>
@@ -441,6 +445,22 @@ const ArticleEditorPage = ({
   }, [isDirty]);
 
   useEffect(() => {
+    const handlePopState = () => {
+      if (isDirty) {
+        window.history.go(1);
+        setTimeout(() => {
+          if (window.confirm("保存されていない変更があります。ページを離れますか？")) {
+            setIsDirty(false);
+            window.history.go(-1);
+          }
+        }, 0);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isDirty]);
+
+  useEffect(() => {
     if (!isDirty || !formTitle.trim()) return;
     const timer = setTimeout(async () => {
       if (autoSaveIdRef.current) {
@@ -566,9 +586,14 @@ const ArticleEditorPage = ({
                 </span>
               ))}
             </div>
-            <div className="text-sm text-gray-700 leading-loose whitespace-pre-wrap">
-              {formContent || <span className="text-gray-400">（本文未入力）</span>}
-            </div>
+            {formContent ? (
+              <div
+                className="text-sm text-gray-700 leading-loose prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(formContent) }}
+              />
+            ) : (
+              <p className="text-sm text-gray-400">（本文未入力）</p>
+            )}
           </div>
         ) : (
           <ArticleEditorTabs
