@@ -362,35 +362,43 @@ export default function RichTextEditor({ content, onChange, placeholder }: Props
             🔗
           </TB>
           {showLinkInput && (
-            <div className="absolute top-9 left-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-72">
-              <p className="text-xs font-bold text-gray-600 mb-2">URLを入力</p>
-              <input
-                type="url"
-                value={linkUrl}
-                onChange={(e) => setLinkUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-400 mb-2"
-                onKeyDown={(e) => e.key === "Enter" && applyLink()}
-                autoFocus
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={applyLink}
-                  className="flex-1 bg-blue-500 text-white text-xs rounded-lg py-1.5 font-bold hover:bg-blue-600"
-                >
-                  適用
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().unsetLink().run();
-                    setShowLinkInput(false);
-                  }}
-                  className="flex-1 border border-gray-200 text-xs rounded-lg py-1.5 text-gray-600 hover:bg-gray-50"
-                >
-                  解除
-                </button>
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+              onClick={() => setShowLinkInput(false)}
+            >
+              <div
+                className="bg-white border border-gray-200 rounded-xl shadow-xl p-4 w-80"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="text-sm font-bold text-gray-700 mb-3">リンクURLを入力</p>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 mb-3"
+                  onKeyDown={(e) => e.key === "Enter" && applyLink()}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={applyLink}
+                    className="flex-1 bg-blue-500 text-white text-sm rounded-lg py-2 font-bold hover:bg-blue-600"
+                  >
+                    適用
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      editor.chain().focus().unsetLink().run();
+                      setShowLinkInput(false);
+                    }}
+                    className="flex-1 border border-gray-200 text-sm rounded-lg py-2 text-gray-600 hover:bg-gray-50"
+                  >
+                    解除
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -400,24 +408,32 @@ export default function RichTextEditor({ content, onChange, placeholder }: Props
             🖼️
           </TB>
           {showImageInput && (
-            <div className="absolute top-9 left-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-72">
-              <p className="text-xs font-bold text-gray-600 mb-2">画像URL</p>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-400 mb-2"
-                onKeyDown={(e) => e.key === "Enter" && insertImage()}
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={insertImage}
-                className="w-full bg-blue-500 text-white text-xs rounded-lg py-1.5 font-bold hover:bg-blue-600"
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+              onClick={() => setShowImageInput(false)}
+            >
+              <div
+                className="bg-white border border-gray-200 rounded-xl shadow-xl p-4 w-80"
+                onClick={(e) => e.stopPropagation()}
               >
-                挿入
-              </button>
+                <p className="text-sm font-bold text-gray-700 mb-3">画像URLを入力</p>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 mb-3"
+                  onKeyDown={(e) => e.key === "Enter" && insertImage()}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={insertImage}
+                  className="w-full bg-blue-500 text-white text-sm rounded-lg py-2 font-bold hover:bg-blue-600"
+                >
+                  挿入
+                </button>
+              </div>
             </div>
           )}
         </div>
