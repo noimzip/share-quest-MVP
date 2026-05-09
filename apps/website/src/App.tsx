@@ -171,7 +171,7 @@ const ArticleEditorTabs = ({
   const [activeTab, setActiveTab] = useState<"editor" | "settings">("editor");
   return (
     <div>
-      <div className="flex md:hidden border-b border-gray-200 mb-4">
+      <div className="flex md:hidden border-b border-gray-200 mb-4 relative z-10">
         <button
           type="button"
           onClick={() => setActiveTab("editor")}
@@ -191,7 +191,9 @@ const ArticleEditorTabs = ({
         <div className={activeTab === "settings" ? "block md:block" : "hidden md:block"}>
           {settingsPanel}
         </div>
-        <div className={activeTab === "editor" ? "block md:block" : "hidden md:block"}>
+        <div
+          className={`min-w-0 overflow-hidden ${activeTab === "editor" ? "block md:block" : "hidden md:block"}`}
+        >
           {editorPanel}
         </div>
       </div>
@@ -600,7 +602,7 @@ const ArticleEditorPage = ({
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">タグ</label>
-                  <div className="flex flex-wrap gap-1 mb-2 min-h-[28px] max-w-xs">
+                  <div className="flex flex-wrap gap-1 mb-2 max-w-xs">
                     {tags.map((tag) => (
                       <span
                         key={tag}
