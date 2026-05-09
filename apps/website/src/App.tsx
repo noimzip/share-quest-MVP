@@ -168,39 +168,13 @@ const ArticleEditorTabs = ({
   settingsPanel: React.ReactNode;
   editorPanel: React.ReactNode;
 }) => {
-  const [activeTab, setActiveTab] = useState<"editor" | "settings">("editor");
   return (
-    <div>
-      <div className="flex md:hidden border-b border-gray-200 mb-4 relative z-10">
-        <button
-          type="button"
-          onClick={() => setActiveTab("editor")}
-          className={`flex-1 py-2.5 text-sm font-bold transition-colors ${activeTab === "editor" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}
-        >
-          ✏️ 本文
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("settings")}
-          className={`flex-1 py-2.5 text-sm font-bold transition-colors ${activeTab === "settings" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}
-        >
-          ⚙️ 設定
-        </button>
-      </div>
-      <div className="md:grid md:grid-cols-[360px_1fr] md:gap-6 md:items-start">
-        <div className={activeTab === "settings" ? "block md:block" : "hidden md:block"}>
-          {settingsPanel}
-        </div>
-        <div
-          className={`min-w-0 md:sticky md:top-[64px] md:max-h-[calc(100vh-80px)] md:overflow-y-auto ${activeTab === "editor" ? "block md:block" : "hidden md:block"}`}
-        >
-          {editorPanel}
-        </div>
-      </div>
+    <div className="space-y-6">
+      {settingsPanel}
+      {editorPanel}
     </div>
   );
 };
-
 const ArticleEditorPage = ({
   editingId,
   articles,
