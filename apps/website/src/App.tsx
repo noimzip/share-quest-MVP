@@ -2022,8 +2022,8 @@ export default function App() {
     };
 
     return (
-      <div className="p-4 md:p-8 space-y-6 animate-in slide-in-from-right-8 duration-300">
-        <div className="-mx-4 md:-mx-8 -mt-4 md:-mt-8 px-4 md:px-8 bg-white border-b border-gray-200 py-3 flex items-center gap-3 sticky top-0 z-10 shadow-sm mb-6">
+      <div className="p-4 space-y-6 animate-in slide-in-from-right-8 duration-300">
+        <div className="-mx-4 -mt-4 px-4 bg-white border-b border-gray-200 py-3 flex items-center gap-3 sticky top-0 z-10 shadow-sm mb-6">
           <button
             onClick={() => window.history.back()}
             className="p-2 bg-white rounded-full shadow-sm"
